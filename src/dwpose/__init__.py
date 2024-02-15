@@ -37,11 +37,11 @@ def draw_pose(pose, H, W):
 
 
 class DWposeDetector:
-    def __init__(self):
-        pass
+    def __init__(self, use_sam=False):
+        self.use_sam = use_sam
 
     def to(self, device):
-        self.pose_estimation = Wholebody(device)
+        self.pose_estimation = Wholebody(device, self.use_sam)
         return self
 
     def cal_height(self, input_image):
@@ -67,6 +67,7 @@ class DWposeDetector:
         output_type="pil",
         **kwargs,
     ):
+        input_image_rgb = np.array(input_image, dtype=np.uint8)
         input_image = cv2.cvtColor(
             np.array(input_image, dtype=np.uint8), cv2.COLOR_RGB2BGR
         )
@@ -75,7 +76,10 @@ class DWposeDetector:
         input_image = resize_image(input_image, detect_resolution)
         H, W, C = input_image.shape
         with torch.no_grad():
-            candidate, subset = self.pose_estimation(input_image)
+            if self.use_sam:
+                candidate, subset, pure_image, mask = self.pose_estimation(input_image, input_image_rgb)
+            else:
+                candidate, subset = self.pose_estimation(input_image)
             nums, keys, locs = candidate.shape
             candidate[..., 0] /= float(W)
             candidate[..., 1] /= float(H)
@@ -119,5 +123,8 @@ class DWposeDetector:
 
             if output_type == "pil":
                 detected_map = Image.fromarray(detected_map)
+
+            if self.use_sam:
+                return detected_map, body_score, pure_image, mask
 
             return detected_map, body_score
