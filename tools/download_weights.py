@@ -102,6 +102,14 @@ def prepare_anyone():
             local_dir=local_dir,
         )
 
+
+def prepare_sam():
+    print(f"Preparing SegmentAnything weights...")
+    local_dir = "./pretrained_weights/SAM"
+    os.makedirs(local_dir, exist_ok=True)
+    os.system(f"wget -P {local_dir} https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth")
+
+
 if __name__ == '__main__':
     prepare_base_model()
     prepare_image_encoder()
